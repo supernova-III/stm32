@@ -5,7 +5,7 @@ project(fatfs_spi_driver LANGUAGES C ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_EXPORT_COMPILE_COMMANDS On)
 
-set(STM32CubeF4Path ${CMAKE_SOURCE_DIR}/STM32CubeF4)
+set(STM32CubeF4Path ${CMAKE_SOURCE_DIR}/deps/STM32CubeF4)
 set(CMSISPath ${STM32CubeF4Path}/Drivers/CMSIS)
 
 add_executable(${PROJECT_NAME}_test main.c
