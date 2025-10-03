@@ -5,5 +5,6 @@ set(CMAKE_ASM_COMPILER arm-none-eabi-g++)
 
 set(COMMON_FLAGS "-ffreestanding -nostdlib")
 set(CMAKE_C_FLAGS "-mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard ${COMMON_FLAGS}" CACHE STRING "" FORCE)
+set(CMAKE_CXX_FLAGS "-mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard ${COMMON_FLAGS} -Wno-volatile -fno-exceptions -fno-rtti -fno-use-cxa-atexit" CACHE STRING "" FORCE)
 set(CMAKE_ASM_FLAGS "-mcpu=cortex-m4 -mthumb ${COMMON_FLAGS}" CACHE STRING "" FORCE)
-set(CMAKE_EXE_LINKER_FLAGS "-T${CMAKE_SOURCE_DIR}/stm32f411re.ld ${COMMON_FLAGS}" CACHE STRING "" FORCE)
+set(CMAKE_EXE_LINKER_FLAGS "-T${CMAKE_SOURCE_DIR}/stm32f411re.ld ${COMMON_FLAGS} -lgcc -lc -lnosys" CACHE STRING "" FORCE)

@@ -5,8 +5,9 @@ BINARY_DEST:=/mnt/c/dev/stm32firmware
 
 deps:
 	mkdir deps
+	mkdir -p deps/ff16.zip
 	cd deps && git clone --recursive  --depth 1 --branch $(HAL_VERSION) https://github.com/STMicroelectronics/STM32CubeF4.git
-	cd deps && wget https://elm-chan.org/fsw/ff/arc/ff16.zip && unzip ff16.zip
+	cd deps && wget https://elm-chan.org/fsw/ff/arc/ff16.zip && unzip ff16.zip -d ff16
 
 cmake:
 	cmake -B build -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake

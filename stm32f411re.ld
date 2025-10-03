@@ -36,4 +36,18 @@ SECTIONS
     *(COMMON)
     _ebss = .;
   } >SRAM
+
+  .init_array :
+  {
+    __init_array_start = .;
+    KEEP(*(.init_array*))
+    __init_array_end = .;
+  } > FLASH
+
+  .preinit_array :
+  {
+    __preinit_array_start = .;
+    KEEP(*(.preinit_array*))
+    __preinit_array_end = .;
+  } > FLASH
 }
