@@ -14,7 +14,7 @@ add_executable(${PROJECT_NAME}_test main.cpp)
 add_library(${PROJECT_NAME}_startup_lib STATIC
   cpp_runtime.c
   ${STM32CubeF4Path}/Projects/STM32F411RE-Nucleo/Demonstrations/Src/system_stm32f4xx.c
-  startup_stm32f411xe.s)
+  ${STM32CubeF4Path}/Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc/startup_stm32f411xe.s)
   
 target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME}_startup_lib)
 
