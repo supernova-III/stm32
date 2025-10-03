@@ -6,15 +6,42 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_EXPORT_COMPILE_COMMANDS On)
 
-set(STM32CubeF4Path ${CMAKE_SOURCE_DIR}/deps/STM32CubeF4)
-set(CMSISPath ${STM32CubeF4Path}/Drivers/CMSIS)
+
+include(FetchContent)
+set(FETCHCONTENT_QUIET FALSE)
+FetchContent_Declare(stm32_cmsis
+  GIT_REPOSITORY https://github.com/STMicroelectronics/cmsis-device-f4.git
+  GIT_TAG v2.6.11
+)
+
+FetchContent_Declare(arm_cmsis_6
+  GIT_REPOSITORY https://github.com/ARM-software/CMSIS_6.git
+  GIT_TAG v6.2.0
+)
+
+FetchContent_GetProperties(stm32_cmsis)
+if (NOT stm32_cmsis_POPULATED)
+  FetchContent_Populate(stm32_cmsis)
+endif()
+FetchContent_GetProperties(arm_cmsis_6)
+if (NOT arm_cmsis_6_POPULATED)
+  FetchContent_Populate(arm_cmsis_6)
+endif()
+
+set(CMSIS_PATH ${stm32_cmsis_SOURCE_DIR})
+set(CMSIS6_PATH ${arm_cmsis_6_SOURCE_DIR})
 
 add_executable(${PROJECT_NAME}_test main.cpp)
 
 add_library(${PROJECT_NAME}_startup_lib STATIC
   cpp_runtime.c
-  ${STM32CubeF4Path}/Projects/STM32F411RE-Nucleo/Demonstrations/Src/system_stm32f4xx.c
-  ${STM32CubeF4Path}/Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc/startup_stm32f411xe.s)
+  ${CMSIS_PATH}/Source/Templates/system_stm32f4xx.c
+  ${CMSIS_PATH}/Source/Templates/gcc/startup_stm32f411xe.s)
+
+target_include_directories(${PROJECT_NAME}_startup_lib
+  PUBLIC
+  ${CMSIS6_PATH}/CMSIS/Core/Include
+  ${CMSIS_PATH}/Include)
   
 target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME}_startup_lib)
 
@@ -22,7 +49,4 @@ target_compile_definitions(${PROJECT_NAME}_test
   PUBLIC
   -DSTM32F411xE)
 
-target_include_directories(${PROJECT_NAME}_test
-  PUBLIC
-  ${CMSISPath}/Include
-  ${CMSISPath}/Device/ST/STM32F4xx/Include)
+
