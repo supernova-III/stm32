@@ -33,9 +33,7 @@ set(CMSIS6_PATH ${arm_cmsis_6_SOURCE_DIR})
 add_executable(${PROJECT_NAME}_test main.cpp)
 
 add_library(${PROJECT_NAME}_startup_lib STATIC
-  cpp_runtime.c
-  ${CMSIS_PATH}/Source/Templates/system_stm32f4xx.c
-  ${CMSIS_PATH}/Source/Templates/gcc/startup_stm32f411xe.s)
+   runtime.cpp)
 
 target_include_directories(${PROJECT_NAME}_startup_lib
   PUBLIC
