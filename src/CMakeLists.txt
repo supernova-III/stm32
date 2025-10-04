@@ -33,7 +33,7 @@ set(CMSIS6_PATH ${arm_cmsis_6_SOURCE_DIR})
 add_executable(${PROJECT_NAME}_test main.cpp)
 
 add_library(${PROJECT_NAME}_startup_lib STATIC
-   runtime.cpp)
+   startup.cpp)
 
 target_include_directories(${PROJECT_NAME}_startup_lib
   PUBLIC

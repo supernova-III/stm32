@@ -1,32 +1,11 @@
 #include <stddef.h>
 
-#include "runtime.h"
-
-extern void (*__init_array_start[])(void);
-extern void (*__init_array_end[])(void);
-extern void (*__preinit_array_start[])(void);
-extern void (*__preinit_array_end[])(void);
-
-void __libc_init_array() {
-  const size_t preinit_array_count =
-      __preinit_array_end - __preinit_array_start;
-  const size_t init_array_count = __init_array_end - __init_array_start;
-
-  for (size_t i = 0; i < preinit_array_count; ++i) {
-    __preinit_array_start[i]();
-  }
-
-  for (size_t i = 0; i < init_array_count; ++i) {
-    __init_array_start[i]();
-  }
-}
-
 using InterruptHandler = void (*)();
 
-extern void _estack();
-extern "C" void ResetHandler();
+extern "C" void _estack();
+void ResetHandler();
 
-extern "C" void DefaultHandler() {
+void DefaultHandler() {
   while (true) {
     __asm volatile("nop");
   }
@@ -137,29 +116,56 @@ InterruptHandler interrupt_handlers[]
         DefaultHandler   // SPI5
 };
 
-extern size_t *_sidata;
-extern size_t *_sdata;
-extern size_t *_edata;
-extern size_t *_sbss;
-extern size_t *_ebss;
-
 void SystemInit() {
   // TODO: configure clocks
 }
 
-void ResetHandler() {
-  SystemInit();
+extern size_t _sidata;
+extern size_t _sdata;
+extern size_t _edata;
+extern size_t _sbss;
+extern size_t _ebss;
+
+void MemoryInit() {
   // copying .data to SRAM
-  const size_t data_size = _edata - _sdata;
+  const size_t data_size = &_edata - &_sdata;
+  auto* dst = reinterpret_cast<size_t*>(&_sdata);
   for (size_t i = 0; i < data_size; ++i) {
-    _sdata[i] = _sidata[i];
+    dst[i] = (&_sidata)[i];
   }
 
   // zeroing out the bss
-  const size_t bss_size = _ebss - _sbss;
+  const size_t bss_size = &_ebss - &_sbss;
+  dst = reinterpret_cast<size_t*>(&_sbss);
   for (size_t i = 0; i < bss_size; ++i) {
-    _sbss[i] = 0;
+    dst[i] = 0;
   }
+}
+
+extern void (*__init_array_start[])(void);
+extern void (*__init_array_end[])(void);
+extern void (*__preinit_array_start[])(void);
+extern void (*__preinit_array_end[])(void);
+
+void __libc_init_array() {
+  const size_t preinit_array_count =
+      __preinit_array_end - __preinit_array_start;
+  const size_t init_array_count = __init_array_end - __init_array_start;
+
+  for (size_t i = 0; i < preinit_array_count; ++i) {
+    __preinit_array_start[i]();
+  }
+
+  for (size_t i = 0; i < init_array_count; ++i) {
+    __init_array_start[i]();
+  }
+}
+
+extern void main();
+
+void ResetHandler() {
+  SystemInit();
+  MemoryInit();
 
   __libc_init_array();
 
