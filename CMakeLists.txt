@@ -19,13 +19,23 @@ FetchContent_Declare(arm_cmsis_6
   GIT_TAG v6.2.0
 )
 
+FetchContent_Declare(ff16
+  URL https://elm-chan.org/fsw/ff/arc/ff16.zip
+)
+
 FetchContent_GetProperties(stm32_cmsis)
 if (NOT stm32_cmsis_POPULATED)
   FetchContent_Populate(stm32_cmsis)
 endif()
+
 FetchContent_GetProperties(arm_cmsis_6)
 if (NOT arm_cmsis_6_POPULATED)
   FetchContent_Populate(arm_cmsis_6)
+endif()
+
+FetchContent_GetProperties(ff16)
+if (NOT ff16_POPULATED)
+  FetchContent_Populate(ff16)
 endif()
 
 set(CMSIS_PATH ${stm32_cmsis_SOURCE_DIR})
