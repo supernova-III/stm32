@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdint.h>
 
 using InterruptHandler = void (*)();
 
@@ -116,7 +117,12 @@ InterruptHandler interrupt_handlers[]
         DefaultHandler   // SPI5
 };
 
+extern uint32_t _FPU_CPACR;
+
 void SystemInit() {
+  // Configuring FPU. Allowing full access for FPU
+  *&_FPU_CPACR |= (0b1111 << 20);
+
   // TODO: configure clocks
 }
 

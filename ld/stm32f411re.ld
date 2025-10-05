@@ -4,6 +4,8 @@ MEMORY
   SRAM (rwx) : ORIGIN = 0x20000000, LENGTH = 128K
 }
 
+_FPU_CPACR = 0xE000ED88;
+
 _estack = ORIGIN(SRAM) + LENGTH(SRAM);
 
 _sidata = LOADADDR(.data);
