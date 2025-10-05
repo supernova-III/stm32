@@ -10,7 +10,8 @@
 add_executable(${PROJECT_NAME}_test main.cpp)
 
 add_library(${PROJECT_NAME}_startup_lib STATIC
-   startup.cpp)
+  startup.cpp
+  delay.cpp)
 
 target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME}_startup_lib)
 
