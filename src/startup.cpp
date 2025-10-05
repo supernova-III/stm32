@@ -123,7 +123,7 @@ void SystemInit() {
   // Configuring FPU. Allowing full access for FPU
   *&_FPU_CPACR |= (0b1111 << 20);
 
-  // TODO: configure clocks
+  // Configuring TIM2 timer, it will be used for counting delays
 }
 
 extern size_t _sidata;

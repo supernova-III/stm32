@@ -6,6 +6,7 @@ MEMORY
 
 _FPU_CPACR = 0xE000ED88;
 
+
 _estack = ORIGIN(SRAM) + LENGTH(SRAM);
 
 _sidata = LOADADDR(.data);
