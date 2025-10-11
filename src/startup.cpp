@@ -117,11 +117,12 @@ InterruptHandler interrupt_handlers[]
         DefaultHandler   // SPI5
 };
 
-extern uint32_t FPU_CPACR;
+static inline auto FPU_CPACR =
+    reinterpret_cast<volatile uint32_t* const>(0xE000ED88);
 
 void SystemInit() {
   // Configuring FPU. Allowing full access for FPU
-  *&FPU_CPACR |= (0b1111 << 20);
+  *FPU_CPACR |= (0b1111 << 20);
 
   // Configuring TIM2 timer, it will be used for counting delays
 }
