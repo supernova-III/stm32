@@ -6,8 +6,6 @@ MEMORY
 
 _estack = ORIGIN(SRAM) + LENGTH(SRAM);
 
-_sidata = LOADADDR(.data);
-
 SECTIONS 
 {
   .isr_vector ORIGIN(FLASH) :
@@ -17,22 +15,23 @@ SECTIONS
 
   .text ALIGN(4):
   {
-    *(.text*)
-    *(.rodata*)
+    *(.text)
+    *(.rodata)
   } >FLASH
 
+  _sidata = .;
 
   .data : AT(_sidata)
   {
     _sdata = .;
-    *(.data*)
+    *(.data)
     _edata = .;
   } >SRAM
   
   .bss :
   {
     _sbss = .;
-    *(.bss*)
+    *(.bss)
     *(COMMON)
     _ebss = .;
   } >SRAM
