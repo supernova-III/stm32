@@ -15,18 +15,17 @@ SECTIONS
 
   .text ALIGN(4):
   {
-    *(.text)
+    *(.text*)
     *(.rodata)
   } >FLASH
 
-  _sidata = .;
-
-  .data : AT(_sidata)
+  _sidata = LOADADDR(.data);
+  .data :
   {
     _sdata = .;
     *(.data)
     _edata = .;
-  } >SRAM
+  } >SRAM AT>FLASH
   
   .bss :
   {
