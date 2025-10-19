@@ -2,6 +2,8 @@
 #include <stdint.h>
 
 #include "utils.h"
+#include "rcc.h"
+#include "gpio.h"
 
 using InterruptHandler = void (*)();
 
@@ -118,62 +120,6 @@ InterruptHandler interrupt_handlers[]
         DefaultHandler,  // SPI4
         DefaultHandler   // SPI5
 };
-
-using Register = volatile uint32_t;
-
-struct _RCC {
-  Register CR;
-  Register PLLCFGR;
-  Register CFGR;
-  Register CIR;
-  Register AHB1RSTR;
-  Register AHB2RSTR;
-  Register __reserved0[2];
-  Register APB1RSTR;
-  Register APB2RSTR;
-  Register __reserved1[2];
-  Register AHB1ENR;
-  Register AHB2ENR;
-  Register __reserved3[2];
-  Register APB1ENR;
-  Register APB2ENR;
-  Register __reserved4[2];
-  Register AHB1LPENR;
-  Register AHB2LPENR;
-  Register __reserved5[2];
-  Register APB1LPENR;
-  Register APB2LPENR;
-  Register __reserved6[2];
-  Register BDCR;
-  Register CSR;
-  Register __reserved7[2];
-  Register SSCGR;
-  Register PLLI2SCFGR;
-  Register __reserved8;
-  Register DCKCFGR;
-};
-
-static constexpr uint32_t RCC_BASE_ADDR = 0x4002'3800ul;
-_RCC& RCC = *reinterpret_cast<_RCC*>(RCC_BASE_ADDR);
-
-struct _GPIO {
-  Register MODER;
-  Register OTYPER;
-  Register OSPEEDR;
-  Register PUPDR;
-  Register IDR;
-  Register ODR;
-  Register BSRR;
-  Register LCKR;
-  Register AFRL;
-  Register AFRH;
-};
-
-static constexpr uint32_t GPIOA_BASE_ADDR = 0x4002'0000ul;
-static constexpr uint32_t GPIOB_BASE_ADDR = 0x4002'0400ul;
-
-static _GPIO& GPIOA = *reinterpret_cast<_GPIO*>(GPIOA_BASE_ADDR);
-static _GPIO& GPIOB = *reinterpret_cast<_GPIO*>(GPIOB_BASE_ADDR);
 
 // Sets all GPIO pins to analog mode to minimize leakage current
 static void InitGPIO() {
