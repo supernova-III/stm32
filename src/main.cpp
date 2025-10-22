@@ -1,6 +1,9 @@
-#include <stdint.h>
+#include "gpio.h"
 
 int main() {
-  auto* ptr = reinterpret_cast<uint32_t*>(0x123);
+  GPIO_Enable();
+
+  GPIO_ConfigureOutputA(GPIO_PinPos::_2, GPIO_OutputType::PushPull);
+
   return 0;
 }

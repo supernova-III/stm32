@@ -10,7 +10,8 @@
 add_executable(${PROJECT_NAME}_test main.cpp
   startup.cpp
   rcc.cpp
-  gpio.cpp
+  gpio_driver.cpp
+  gpio_driver_hal.cpp
   delay.cpp
 )
 
