@@ -10,9 +10,10 @@
 add_executable(${PROJECT_NAME}_test main.cpp
   startup.cpp
   rcc.cpp
-  gpio_driver.cpp
   gpio_driver_hal.cpp
   delay.cpp
 )
+
+target_link_libraries(${PROJECT_NAME}_test PUBLIC driver_commonlib gpio_driver_lib)
 
 

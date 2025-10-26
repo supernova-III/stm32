@@ -10,4 +10,5 @@ include(FetchContent)
 set(FETCHCONTENT_QUIET FALSE)
 
 add_subdirectory(libs)
+add_subdirectory(drivers)
 add_subdirectory(src)
