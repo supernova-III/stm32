@@ -4,12 +4,8 @@ FetchContent_Declare(gtest
 
 FetchContent_MakeAvailable(gtest)
 
+add_subdirectory(gpio)
 add_executable(unit_tests)
 
-add_subdirectory(gpio)
-
-target_sources(unit_tests PRIVATE
-  $<TARGET_OBJECTS:gpio>)
-
-target_link_libraries(unit_tests PRIVATE gtest_main)
+target_link_libraries(unit_tests PRIVATE gpio gtest_main)
 
