@@ -25,3 +25,10 @@ void GPIO_Driver_ConfigureAlternate(
     _GPIO_Port* port, GPIO_PinPos pin, GPIO_AlternateType alternate);
 
 void GPIO_Driver_ConfigureAnalog(_GPIO_Port* port, GPIO_PinPos pin);
+
+uint32_t GPIO_Driver_OutputRead(_GPIO_Port* port, GPIO_PinPos pin);
+void GPIO_Driver_OutputWrite(_GPIO_Port* port, GPIO_PinPos pin, uint32_t value);
+void GPIO_Driver_OutputWriteAtomic(
+    _GPIO_Port* port, GPIO_PinPos pin, uint32_t value);
+
+uint32_t GPIO_Driver_InputRead(_GPIO_Port* port, GPIO_PinPos pin);
