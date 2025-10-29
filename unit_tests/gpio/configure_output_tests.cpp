@@ -1,17 +1,56 @@
+#include <bitset>
+#include <format>
 #include <gtest/gtest.h>
 
 #include "gpio_driver.h"
 
-struct TestDataOutput {
+struct TestData {
   GPIO_PinPos pos;
   GPIO_OutputType otype;
   Register expected_moder;
   Register expected_otyper;
 };
 
+namespace {
+
+std::string InsertSeparators(uint32_t reg, uint32_t pos = 2) {
+  std::bitset<sizeof(uint32_t) * 8> bitset{reg};
+
+  auto string = bitset.to_string();
+  auto result = std::string();
+  result.reserve(string.size() + string.size() / pos);
+
+  for (size_t i = 0; i < string.size(); i += pos) {
+    result.append(string, i, pos);
+    result.push_back('\'');
+  }
+
+  if (!result.empty()) {
+    result.pop_back();
+  }
+  return result;
+}
+
+std::string TestDebugString(const _GPIO_Port& port, const TestData& test_data) {
+  auto moder = InsertSeparators(port.MODER);
+  auto otyper = InsertSeparators(port.OTYPER, 4);
+  auto expected_moder = InsertSeparators(test_data.expected_moder);
+  auto expected_otyper = InsertSeparators(test_data.expected_otyper, 4);
+  auto res = std::format(
+      "<==== pos = {}, otype = {}\n", uint32_t(test_data.pos),
+      uint32_t(test_data.otype));
+  res += std::format(
+      "<==== expected moder = {}, expected otyper = {}\n", expected_moder,
+      expected_otyper);
+  res += std::format(
+      "<==== actual   moder = {}, actual   otyper = {}", moder, otyper);
+  return res;
+}
+}  // namespace
+
 TEST(GPIO, ConfigureOutputSingle) {
   // clang-format off
-  const TestDataOutput test_data[] = {
+  const TestData test_data[] = {
       {.pos=GPIO_PinPos::_0,  .otype=GPIO_OutputType::PushPull,  .expected_moder=0b01,                                              .expected_otyper=0},
       {.pos=GPIO_PinPos::_1,  .otype=GPIO_OutputType::PushPull,  .expected_moder=0b01'00,                                           .expected_otyper=0},
       {.pos=GPIO_PinPos::_2,  .otype=GPIO_OutputType::PushPull,  .expected_moder=0b01'00'00,                                        .expected_otyper=0},
@@ -53,8 +92,8 @@ TEST(GPIO, ConfigureOutputSingle) {
     _GPIO_Port port{};
     GPIO_Driver_ConfigureOutput(&port, test_sample.pos, test_sample.otype);
     EXPECT_EQ(port.MODER, test_sample.expected_moder)
-        << "<----------- pos = " << uint32_t(test_sample.pos);
+        << TestDebugString(port, test_sample);
     EXPECT_EQ(port.OTYPER, test_sample.expected_otyper)
-        << "<----------- otype = " << uint32_t(test_sample.otype);
+        << TestDebugString(port, test_sample);
   }
 }
