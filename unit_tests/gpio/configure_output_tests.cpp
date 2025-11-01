@@ -97,3 +97,28 @@ TEST(GPIO, ConfigureOutputSingle) {
         << TestDebugString(port, test_sample);
   }
 }
+
+TEST(GPIO, ConfigureOutputAllPins) {
+  constexpr GPIO_PinPos positions[] = {
+      GPIO_PinPos::_0,  GPIO_PinPos::_1,  GPIO_PinPos::_2,  GPIO_PinPos::_3,
+      GPIO_PinPos::_4,  GPIO_PinPos::_5,  GPIO_PinPos::_6,  GPIO_PinPos::_7,
+      GPIO_PinPos::_8,  GPIO_PinPos::_9,  GPIO_PinPos::_10, GPIO_PinPos::_11,
+      GPIO_PinPos::_12, GPIO_PinPos::_13, GPIO_PinPos::_14, GPIO_PinPos::_15,
+  };
+
+  _GPIO_Port port{};
+  for (const auto pin_pos : positions) {
+    GPIO_Driver_ConfigureOutput(&port, pin_pos, GPIO_OutputType::PushPull);
+  }
+
+  EXPECT_EQ(port.MODER, 0b01'01'01'01'01'01'01'01'01'01'01'01'01'01'01'01ul);
+  EXPECT_EQ(port.OTYPER & 0xF, 0);
+
+  port = {};
+  for (const auto pin_pos : positions) {
+    GPIO_Driver_ConfigureOutput(&port, pin_pos, GPIO_OutputType::OpenDrain);
+  }
+
+  EXPECT_EQ(port.MODER, 0b01'01'01'01'01'01'01'01'01'01'01'01'01'01'01'01ul);
+  EXPECT_EQ(port.OTYPER & 0xF, 0xF);
+}
