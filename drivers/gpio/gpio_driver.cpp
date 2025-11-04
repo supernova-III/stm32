@@ -24,15 +24,15 @@ void GPIO_Driver_ConfigureInput(
   // Set input mode for the given pin
   port->MODER &= ~(0b11 << (2 * pin_pos));
   // Set input type
+  // Reset it first
+  port->PUPDR &= ~(0b11 << (2 * pin_pos));
   switch (input_type) {
     case GPIO_InputType::Floating: {
-      port->PUPDR &= ~(1 << (2 * pin_pos));
     } break;
     case GPIO_InputType::PullUp: {
-      port->PUPDR |= 1 << (2 * pin_pos);
+      port->PUPDR |= 0b01 << (2 * pin_pos);
     } break;
     case GPIO_InputType::PullDown: {
-      port->PUPDR &= ~(0b11 << (2 * pin_pos));
       port->PUPDR |= (0b10 << (2 * pin_pos));
     } break;
   }
