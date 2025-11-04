@@ -1,4 +1,6 @@
 #include <bitset>
+#include <ranges>
+#include <random>
 #include <gtest/gtest.h>
 
 #include "common.h"
@@ -25,12 +27,28 @@ constexpr GPIO_ConfigureOutput_TestParam kTestData[] = {
 
 };
 
+auto GetPinsExcluding(GPIO_PinPos pos) {
+  return std::views::iota(
+             uint32_t(GPIO_PinPos::_0), uint32_t(GPIO_PinPos::_15)) |
+         std::views::filter([pos](uint32_t x) { return x != uint32_t(pos); }) |
+         std::views::transform([](uint32_t x) { return GPIO_PinPos(x); });
+}
+
+uint32_t GenerateRandomRegister() {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<uint32_t> dist(0, UINT32_MAX);
+  return dist(gen);
+}
+
 }  // namespace
 
 TEST_P(GPIO_ConfigureOutputTest, GPIO_ConfigureOutputTest_PushPull) {
   const auto param = GetParam();
 
   _GPIO_Port port{};
+  port.MODER = GenerateRandomRegister();
+
   const auto moder_before = port.MODER;
   GPIO_Driver_ConfigureOutput(&port, param.pos, GPIO_OutputType::PushPull);
   const auto moder_after = port.MODER;
@@ -41,33 +59,26 @@ TEST_P(GPIO_ConfigureOutputTest, GPIO_ConfigureOutputTest_PushPull) {
 
   // Check that the state is set
   EXPECT_EQ(mode, expected)
-      << "<=== mode: " << mode << " expected: " << expected
-      << " moder: " << RegisterBitset(port.MODER);
+      << "<=== " << "pin: " << uint32_t(param.pos) << " mode: " << mode
+      << " expected: " << expected << " moder: " << RegisterBitset(port.MODER);
 
   // Check idempotency
+  GPIO_Driver_ConfigureOutput(&port, param.pos, GPIO_OutputType::PushPull);
   mode = GetPinMode(param.pos, port.MODER);
   EXPECT_EQ(mode, expected)
-      << "<=== mode: " << mode << " expected: " << expected
-      << " moder: " << RegisterBitset(port.MODER);
+      << "<=== " << "pin: " << uint32_t(param.pos) << " mode: " << mode
+      << " expected: " << expected << " moder: " << RegisterBitset(port.MODER);
 
+  auto range = GetPinsExcluding(param.pos);
   // Check that other pins are untouched
-  for (uint32_t i = 0; i < uint32_t(param.pos); ++i) {
+  for (const auto pos : range) {
     const auto mode_before =
-        GetPinMode(static_cast<GPIO_PinPos>(i), moder_before);
+        GetPinMode(static_cast<GPIO_PinPos>(pos), moder_before);
     const auto mode_after =
-        GetPinMode(static_cast<GPIO_PinPos>(i), moder_after);
+        GetPinMode(static_cast<GPIO_PinPos>(pos), moder_after);
     EXPECT_EQ(mode_before, mode_after)
-        << "<==== mode of the pin " << i << " should not have been changed";
-  }
-
-  for (uint32_t i = uint32_t(param.pos) + 1; i <= uint32_t(GPIO_PinPos::_15);
-       ++i) {
-    const auto mode_before =
-        GetPinMode(static_cast<GPIO_PinPos>(i), moder_before);
-    const auto mode_after =
-        GetPinMode(static_cast<GPIO_PinPos>(i), moder_after);
-    EXPECT_EQ(mode_before, mode_after)
-        << "<==== mode of the pin " << i << " should not have been changed";
+        << "<==== mode of the pin " << uint32_t(pos)
+        << " should not have been changed";
   }
 }
 

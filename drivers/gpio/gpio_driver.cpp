@@ -3,6 +3,8 @@
 void GPIO_Driver_ConfigureOutput(
     _GPIO_Port* port, GPIO_PinPos pin, GPIO_OutputType output_type) {
   const auto pin_pos = static_cast<uint32_t>(pin);
+  // Reset current mode
+  port->MODER &= ~(0b11 << (2 * pin_pos));
   // Set output mode for the given pin
   port->MODER |= 0b01 << (2 * pin_pos);
   // Set output type
@@ -20,7 +22,7 @@ void GPIO_Driver_ConfigureInput(
     _GPIO_Port* port, GPIO_PinPos pin, GPIO_InputType input_type) {
   const auto pin_pos = static_cast<uint32_t>(pin);
   // Set input mode for the given pin
-  port->MODER &= ~(1 << (2 * pin_pos));
+  port->MODER &= ~(0b11 << (2 * pin_pos));
   // Set input type
   switch (input_type) {
     case GPIO_InputType::Floating: {
