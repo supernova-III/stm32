@@ -5,6 +5,7 @@ FetchContent_Declare(gtest
 FetchContent_MakeAvailable(gtest)
 enable_testing()
 
+add_subdirectory(unit_tests_common)
 add_subdirectory(gpio)
 add_executable(unit_tests)
 

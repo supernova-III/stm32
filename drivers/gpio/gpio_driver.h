@@ -3,16 +3,16 @@
 #include "gpio_common.h"
 
 struct _GPIO_Port {
-  volatile Register MODER;
-  volatile Register OTYPER;
-  volatile Register OSPEEDR;
-  volatile Register PUPDR;
-  volatile Register IDR;
-  volatile Register ODR;
-  volatile Register BSRR;
-  volatile Register LCKR;
-  volatile Register AFRL;
-  volatile Register AFRH;
+  Register MODER;
+  Register OTYPER;
+  Register OSPEEDR;
+  Register PUPDR;
+  Register IDR;
+  Register ODR;
+  Register BSRR;
+  Register LCKR;
+  Register AFRL;
+  Register AFRH;
 };
 
 void GPIO_Driver_ConfigureOutput(

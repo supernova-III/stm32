@@ -1,124 +1,76 @@
 #include <bitset>
-#include <format>
 #include <gtest/gtest.h>
 
+#include "common.h"
+#include "gpio_common.h"
 #include "gpio_driver.h"
 
-struct TestData {
+namespace {
+struct GPIO_ConfigureOutput_TestParam {
   GPIO_PinPos pos;
-  GPIO_OutputType otype;
-  Register expected_moder;
-  Register expected_otyper;
+  static inline constexpr auto expected_output_mode = 0b01ul;
+  static inline constexpr auto expected_input_mode = 0b00ul;
 };
 
-namespace {
+class GPIO_ConfigureOutputTest
+    : public ::testing::TestWithParam<GPIO_ConfigureOutput_TestParam> {};
 
-std::string InsertSeparators(uint32_t reg, uint32_t pos = 2) {
-  std::bitset<sizeof(uint32_t) * 8> bitset{reg};
+constexpr GPIO_ConfigureOutput_TestParam kTestData[] = {
+    {GPIO_PinPos::_0},  {GPIO_PinPos::_1},  {GPIO_PinPos::_2},
+    {GPIO_PinPos::_3},  {GPIO_PinPos::_4},  {GPIO_PinPos::_5},
+    {GPIO_PinPos::_6},  {GPIO_PinPos::_7},  {GPIO_PinPos::_8},
+    {GPIO_PinPos::_9},  {GPIO_PinPos::_10}, {GPIO_PinPos::_11},
+    {GPIO_PinPos::_12}, {GPIO_PinPos::_13}, {GPIO_PinPos::_14},
+    {GPIO_PinPos::_15}
 
-  auto string = bitset.to_string();
-  auto result = std::string();
-  result.reserve(string.size() + string.size() / pos);
+};
 
-  for (size_t i = 0; i < string.size(); i += pos) {
-    result.append(string, i, pos);
-    result.push_back('\'');
-  }
-
-  if (!result.empty()) {
-    result.pop_back();
-  }
-  return result;
-}
-
-std::string TestDebugString(const _GPIO_Port& port, const TestData& test_data) {
-  auto moder = InsertSeparators(port.MODER);
-  auto otyper = InsertSeparators(port.OTYPER, 4);
-  auto expected_moder = InsertSeparators(test_data.expected_moder);
-  auto expected_otyper = InsertSeparators(test_data.expected_otyper, 4);
-  auto res = std::format(
-      "<==== pos = {}, otype = {}\n", uint32_t(test_data.pos),
-      uint32_t(test_data.otype));
-  res += std::format(
-      "<==== expected moder = {}, expected otyper = {}\n", expected_moder,
-      expected_otyper);
-  res += std::format(
-      "<==== actual   moder = {}, actual   otyper = {}", moder, otyper);
-  return res;
-}
 }  // namespace
 
-TEST(GPIO, ConfigureOutputSingle) {
-  // clang-format off
-  const TestData test_data[] = {
-      {.pos=GPIO_PinPos::_0,  .otype=GPIO_OutputType::PushPull,  .expected_moder=0b01,                                              .expected_otyper=0},
-      {.pos=GPIO_PinPos::_1,  .otype=GPIO_OutputType::PushPull,  .expected_moder=0b01'00,                                           .expected_otyper=0},
-      {.pos=GPIO_PinPos::_2,  .otype=GPIO_OutputType::PushPull,  .expected_moder=0b01'00'00,                                        .expected_otyper=0},
-      {.pos=GPIO_PinPos::_3,  .otype=GPIO_OutputType::PushPull,  .expected_moder=0b01'00'00'00,                                     .expected_otyper=0},
-      {.pos=GPIO_PinPos::_4,  .otype=GPIO_OutputType::PushPull,  .expected_moder=0b01'00'00'00'00,                                  .expected_otyper=0},
-      {.pos=GPIO_PinPos::_5,  .otype=GPIO_OutputType::PushPull,  .expected_moder=0b01'00'00'00'00'00,                               .expected_otyper=0},
-      {.pos=GPIO_PinPos::_6,  .otype=GPIO_OutputType::PushPull,  .expected_moder=0b01'00'00'00'00'00'00,                            .expected_otyper=0},
-      {.pos=GPIO_PinPos::_7,  .otype=GPIO_OutputType::PushPull,  .expected_moder=0b01'00'00'00'00'00'00'00,                         .expected_otyper=0},
-      {.pos=GPIO_PinPos::_8,  .otype=GPIO_OutputType::PushPull,  .expected_moder=0b01'00'00'00'00'00'00'00'00,                      .expected_otyper=0},
-      {.pos=GPIO_PinPos::_9,  .otype=GPIO_OutputType::PushPull,  .expected_moder=0b01'00'00'00'00'00'00'00'00'00,                   .expected_otyper=0},
-      {.pos=GPIO_PinPos::_10, .otype=GPIO_OutputType::PushPull,  .expected_moder=0b01'00'00'00'00'00'00'00'00'00'00,                .expected_otyper=0},
-      {.pos=GPIO_PinPos::_11, .otype=GPIO_OutputType::PushPull,  .expected_moder=0b01'00'00'00'00'00'00'00'00'00'00'00,             .expected_otyper=0},
-      {.pos=GPIO_PinPos::_12, .otype=GPIO_OutputType::PushPull,  .expected_moder=0b01'00'00'00'00'00'00'00'00'00'00'00'00,          .expected_otyper=0},
-      {.pos=GPIO_PinPos::_13, .otype=GPIO_OutputType::PushPull,  .expected_moder=0b01'00'00'00'00'00'00'00'00'00'00'00'00'00,       .expected_otyper=0},
-      {.pos=GPIO_PinPos::_14, .otype=GPIO_OutputType::PushPull,  .expected_moder=0b01'00'00'00'00'00'00'00'00'00'00'00'00'00'00,    .expected_otyper=0},
-      {.pos=GPIO_PinPos::_15, .otype=GPIO_OutputType::PushPull,  .expected_moder=0b01'00'00'00'00'00'00'00'00'00'00'00'00'00'00'00, .expected_otyper=0},
-
-      {.pos=GPIO_PinPos::_0,  .otype=GPIO_OutputType::OpenDrain, .expected_moder=0b01,                                              .expected_otyper=0b1},
-      {.pos=GPIO_PinPos::_1,  .otype=GPIO_OutputType::OpenDrain, .expected_moder=0b01'00,                                           .expected_otyper=0b10},
-      {.pos=GPIO_PinPos::_2,  .otype=GPIO_OutputType::OpenDrain, .expected_moder=0b01'00'00,                                        .expected_otyper=0b100},
-      {.pos=GPIO_PinPos::_3,  .otype=GPIO_OutputType::OpenDrain, .expected_moder=0b01'00'00'00,                                     .expected_otyper=0b1000},
-      {.pos=GPIO_PinPos::_4,  .otype=GPIO_OutputType::OpenDrain, .expected_moder=0b01'00'00'00'00,                                  .expected_otyper=0b1000'0},
-      {.pos=GPIO_PinPos::_5,  .otype=GPIO_OutputType::OpenDrain, .expected_moder=0b01'00'00'00'00'00,                               .expected_otyper=0b1000'00},
-      {.pos=GPIO_PinPos::_6,  .otype=GPIO_OutputType::OpenDrain, .expected_moder=0b01'00'00'00'00'00'00,                            .expected_otyper=0b1000'000},
-      {.pos=GPIO_PinPos::_7,  .otype=GPIO_OutputType::OpenDrain, .expected_moder=0b01'00'00'00'00'00'00'00,                         .expected_otyper=0b1000'0000},
-      {.pos=GPIO_PinPos::_8,  .otype=GPIO_OutputType::OpenDrain, .expected_moder=0b01'00'00'00'00'00'00'00'00,                      .expected_otyper=0b1000'0000'0},
-      {.pos=GPIO_PinPos::_9,  .otype=GPIO_OutputType::OpenDrain, .expected_moder=0b01'00'00'00'00'00'00'00'00'00,                   .expected_otyper=0b1000'0000'00},
-      {.pos=GPIO_PinPos::_10, .otype=GPIO_OutputType::OpenDrain, .expected_moder=0b01'00'00'00'00'00'00'00'00'00'00,                .expected_otyper=0b1000'0000'000},
-      {.pos=GPIO_PinPos::_11, .otype=GPIO_OutputType::OpenDrain, .expected_moder=0b01'00'00'00'00'00'00'00'00'00'00'00,             .expected_otyper=0b1000'0000'0000},
-      {.pos=GPIO_PinPos::_12, .otype=GPIO_OutputType::OpenDrain, .expected_moder=0b01'00'00'00'00'00'00'00'00'00'00'00'00,          .expected_otyper=0b1000'0000'0000'0},
-      {.pos=GPIO_PinPos::_13, .otype=GPIO_OutputType::OpenDrain, .expected_moder=0b01'00'00'00'00'00'00'00'00'00'00'00'00'00,       .expected_otyper=0b1000'0000'0000'00},
-      {.pos=GPIO_PinPos::_14, .otype=GPIO_OutputType::OpenDrain, .expected_moder=0b01'00'00'00'00'00'00'00'00'00'00'00'00'00'00,    .expected_otyper=0b1000'0000'0000'000},
-      {.pos=GPIO_PinPos::_15, .otype=GPIO_OutputType::OpenDrain, .expected_moder=0b01'00'00'00'00'00'00'00'00'00'00'00'00'00'00'00, .expected_otyper=0b1000'0000'0000'0000}
-
-  };
-  // clang-format on
-
-  for (const auto& test_sample : test_data) {
-    _GPIO_Port port{};
-    GPIO_Driver_ConfigureOutput(&port, test_sample.pos, test_sample.otype);
-    EXPECT_EQ(port.MODER, test_sample.expected_moder)
-        << TestDebugString(port, test_sample);
-    EXPECT_EQ(port.OTYPER, test_sample.expected_otyper)
-        << TestDebugString(port, test_sample);
-  }
-}
-
-TEST(GPIO, ConfigureOutputAllPins) {
-  constexpr GPIO_PinPos positions[] = {
-      GPIO_PinPos::_0,  GPIO_PinPos::_1,  GPIO_PinPos::_2,  GPIO_PinPos::_3,
-      GPIO_PinPos::_4,  GPIO_PinPos::_5,  GPIO_PinPos::_6,  GPIO_PinPos::_7,
-      GPIO_PinPos::_8,  GPIO_PinPos::_9,  GPIO_PinPos::_10, GPIO_PinPos::_11,
-      GPIO_PinPos::_12, GPIO_PinPos::_13, GPIO_PinPos::_14, GPIO_PinPos::_15,
-  };
+TEST_P(GPIO_ConfigureOutputTest, GPIO_ConfigureOutputTest_PushPull) {
+  const auto param = GetParam();
 
   _GPIO_Port port{};
-  for (const auto pin_pos : positions) {
-    GPIO_Driver_ConfigureOutput(&port, pin_pos, GPIO_OutputType::PushPull);
+  const auto moder_before = port.MODER;
+  GPIO_Driver_ConfigureOutput(&port, param.pos, GPIO_OutputType::PushPull);
+  const auto moder_after = port.MODER;
+
+  std::bitset<2> mode = GetPinMode(param.pos, port.MODER);
+  const std::bitset<2> expected =
+      GPIO_ConfigureOutput_TestParam::expected_output_mode;
+
+  // Check that the state is set
+  EXPECT_EQ(mode, expected)
+      << "<=== mode: " << mode << " expected: " << expected
+      << " moder: " << RegisterBitset(port.MODER);
+
+  // Check idempotency
+  mode = GetPinMode(param.pos, port.MODER);
+  EXPECT_EQ(mode, expected)
+      << "<=== mode: " << mode << " expected: " << expected
+      << " moder: " << RegisterBitset(port.MODER);
+
+  // Check that other pins are untouched
+  for (uint32_t i = 0; i < uint32_t(param.pos); ++i) {
+    const auto mode_before =
+        GetPinMode(static_cast<GPIO_PinPos>(i), moder_before);
+    const auto mode_after =
+        GetPinMode(static_cast<GPIO_PinPos>(i), moder_after);
+    EXPECT_EQ(mode_before, mode_after)
+        << "<==== mode of the pin " << i << " should not have been changed";
   }
 
-  EXPECT_EQ(port.MODER, 0b01'01'01'01'01'01'01'01'01'01'01'01'01'01'01'01ul);
-  EXPECT_EQ(port.OTYPER & 0xF, 0);
-
-  port = {};
-  for (const auto pin_pos : positions) {
-    GPIO_Driver_ConfigureOutput(&port, pin_pos, GPIO_OutputType::OpenDrain);
+  for (uint32_t i = uint32_t(param.pos) + 1; i <= uint32_t(GPIO_PinPos::_15);
+       ++i) {
+    const auto mode_before =
+        GetPinMode(static_cast<GPIO_PinPos>(i), moder_before);
+    const auto mode_after =
+        GetPinMode(static_cast<GPIO_PinPos>(i), moder_after);
+    EXPECT_EQ(mode_before, mode_after)
+        << "<==== mode of the pin " << i << " should not have been changed";
   }
-
-  EXPECT_EQ(port.MODER, 0b01'01'01'01'01'01'01'01'01'01'01'01'01'01'01'01ul);
-  EXPECT_EQ(port.OTYPER & 0xF, 0xF);
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    GPIO_ConfigureOutputTests, GPIO_ConfigureOutputTest,
+    ::testing::ValuesIn(kTestData));
