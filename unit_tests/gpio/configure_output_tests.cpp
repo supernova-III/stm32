@@ -8,10 +8,12 @@
 #include "gpio_driver.h"
 
 namespace {
+
 struct GPIO_ConfigureOutput_TestParam {
   GPIO_PinPos pos;
-  static inline constexpr auto expected_output_mode = 0b01ul;
-  static inline constexpr auto expected_input_mode = 0b00ul;
+  static inline constexpr uint32_t expected_output_mode = 0b01;
+  static inline constexpr uint32_t expected_otype_push_pull = 0b0;
+  static inline constexpr uint32_t expected_otype_open_drain = 0b1;
 };
 
 class GPIO_ConfigureOutputTest
@@ -41,44 +43,69 @@ uint32_t GenerateRandomRegister() {
   return dist(gen);
 }
 
+uint32_t GetOutputType(GPIO_PinPos pin, RegisterBitset otyper) {
+  return otyper[uint32_t(pin)];
+}
+
+struct OutputTypeTestCase {
+  GPIO_OutputType output_type;
+  uint32_t expected_otype_bit;
+};
+
 }  // namespace
 
 TEST_P(GPIO_ConfigureOutputTest, GPIO_ConfigureOutputTest_PushPull) {
+  constexpr OutputTypeTestCase output_types[]{
+      {GPIO_OutputType::PushPull, 0b0}, {GPIO_OutputType::OpenDrain, 0b1}};
+
   const auto param = GetParam();
 
-  _GPIO_Port port{};
-  port.MODER = GenerateRandomRegister();
+  for (const auto& output_type : output_types) {
+    _GPIO_Port port{};
+    port.MODER = GenerateRandomRegister();
+    port.OTYPER = GenerateRandomRegister();
 
-  const auto moder_before = port.MODER;
-  GPIO_Driver_ConfigureOutput(&port, param.pos, GPIO_OutputType::PushPull);
-  const auto moder_after = port.MODER;
+    const auto moder_before = port.MODER;
+    const auto otyper_before = port.OTYPER;
+    GPIO_Driver_ConfigureOutput(&port, param.pos, output_type.output_type);
+    const auto moder_after = port.MODER;
+    const auto otyper_after = port.OTYPER;
 
-  std::bitset<2> mode = GetPinMode(param.pos, port.MODER);
-  const std::bitset<2> expected =
-      GPIO_ConfigureOutput_TestParam::expected_output_mode;
+    std::bitset<2> mode = GetPinMode(param.pos, port.MODER);
+    constexpr std::bitset<2> expected =
+        GPIO_ConfigureOutput_TestParam::expected_output_mode;
 
-  // Check that the state is set
-  EXPECT_EQ(mode, expected)
-      << "<=== " << "pin: " << uint32_t(param.pos) << " mode: " << mode
-      << " expected: " << expected << " moder: " << RegisterBitset(port.MODER);
+    const auto otype = GetOutputType(param.pos, port.OTYPER);
 
-  // Check idempotency
-  GPIO_Driver_ConfigureOutput(&port, param.pos, GPIO_OutputType::PushPull);
-  mode = GetPinMode(param.pos, port.MODER);
-  EXPECT_EQ(mode, expected)
-      << "<=== " << "pin: " << uint32_t(param.pos) << " mode: " << mode
-      << " expected: " << expected << " moder: " << RegisterBitset(port.MODER);
+    // Check that the state is set
+    EXPECT_EQ(mode, expected) << "<=== " << "pin: " << uint32_t(param.pos)
+                              << " mode: " << mode << " expected: " << expected
+                              << " moder: " << RegisterBitset(port.MODER);
+    EXPECT_EQ(otype, output_type.expected_otype_bit);
 
-  auto range = GetPinsExcluding(param.pos);
-  // Check that other pins are untouched
-  for (const auto pos : range) {
-    const auto mode_before =
-        GetPinMode(static_cast<GPIO_PinPos>(pos), moder_before);
-    const auto mode_after =
-        GetPinMode(static_cast<GPIO_PinPos>(pos), moder_after);
-    EXPECT_EQ(mode_before, mode_after)
-        << "<==== mode of the pin " << uint32_t(pos)
-        << " should not have been changed";
+    // Check idempotency
+    GPIO_Driver_ConfigureOutput(&port, param.pos, GPIO_OutputType::PushPull);
+    mode = GetPinMode(param.pos, port.MODER);
+    EXPECT_EQ(mode, expected) << "<=== " << "pin: " << uint32_t(param.pos)
+                              << " mode: " << mode << " expected: " << expected
+                              << " moder: " << RegisterBitset(port.MODER);
+
+    EXPECT_EQ(otype, output_type.expected_otype_bit);
+
+    auto range = GetPinsExcluding(param.pos);
+    // Check that other pins are untouched
+    for (const auto pos : range) {
+      const auto mode_before =
+          GetPinMode(static_cast<GPIO_PinPos>(pos), moder_before);
+      const auto mode_after =
+          GetPinMode(static_cast<GPIO_PinPos>(pos), moder_after);
+      const auto otype_before = GetOutputType(pos, otyper_before);
+      const auto otype_after = GetOutputType(pos, otyper_after);
+      EXPECT_EQ(mode_before, mode_after)
+          << "<==== mode of the pin " << uint32_t(pos)
+          << " should not have been changed";
+      EXPECT_EQ(otype_before, otype_after);
+    }
   }
 }
 
