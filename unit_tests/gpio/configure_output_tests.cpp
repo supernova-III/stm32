@@ -16,7 +16,7 @@ struct GPIO_ConfigureOutput_TestParam {
   static inline constexpr uint32_t expected_otype_open_drain = 0b1;
 };
 
-class GPIO_ConfigureOutputTest
+class GPIO_OutputTest
     : public ::testing::TestWithParam<GPIO_ConfigureOutput_TestParam> {};
 
 constexpr GPIO_ConfigureOutput_TestParam kTestData[] = {
@@ -54,7 +54,7 @@ struct OutputTypeTestCase {
 
 }  // namespace
 
-TEST_P(GPIO_ConfigureOutputTest, GPIO_ConfigureOutputTest_PushPull) {
+TEST_P(GPIO_OutputTest, GPIO_ConfigureOutputTest) {
   constexpr OutputTypeTestCase output_types[]{
       {GPIO_OutputType::PushPull, 0b0}, {GPIO_OutputType::OpenDrain, 0b1}};
 
@@ -93,7 +93,7 @@ TEST_P(GPIO_ConfigureOutputTest, GPIO_ConfigureOutputTest_PushPull) {
     EXPECT_EQ(otype, output_type.expected_otype_bit);
 
     auto range = GetPinsExcluding(param.pos);
-    // Check that other pins are untouched
+    // Isolation
     for (const auto pos : range) {
       const auto mode_before =
           GetPinMode(static_cast<GPIO_PinPos>(pos), moder_before);
@@ -109,6 +109,32 @@ TEST_P(GPIO_ConfigureOutputTest, GPIO_ConfigureOutputTest_PushPull) {
   }
 }
 
+TEST_P(GPIO_OutputTest, GPIO_OutputWriteTest) {
+  _GPIO_Port port{};
+  const auto param = GetParam();
+
+  const uint32_t values[] = {0, 1};
+
+  for (auto value : values) {
+    port.ODR = 0;
+    RegisterBitset odr_before = port.ODR;
+    // Check value written
+    GPIO_Driver_OutputWrite(&port, param.pos, value);
+    RegisterBitset odr_after = port.ODR;
+    EXPECT_EQ(odr_after[uint32_t(param.pos)], value);
+
+    // Idempotency
+    GPIO_Driver_OutputWrite(&port, param.pos, value);
+    EXPECT_EQ(odr_after[uint32_t(param.pos)], value);
+
+    // Isolation
+    auto range = GetPinsExcluding(param.pos);
+    for (auto pin : range) {
+      const auto pos = uint32_t(pin);
+      EXPECT_EQ(odr_before[pos], odr_after[pos]);
+    }
+  }
+}
+
 INSTANTIATE_TEST_SUITE_P(
-    GPIO_ConfigureOutputTests, GPIO_ConfigureOutputTest,
-    ::testing::ValuesIn(kTestData));
+    GPIO_ConfigureOutputTests, GPIO_OutputTest, ::testing::ValuesIn(kTestData));
