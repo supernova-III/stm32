@@ -1,5 +1,5 @@
 add_library(gpio OBJECT 
-  configure_output_tests.cpp
+  gpio_output_tests.cpp
   common.cpp
   #configure_input_tests.cpp
 )

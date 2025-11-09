@@ -136,5 +136,31 @@ TEST_P(GPIO_OutputTest, GPIO_OutputWriteTest) {
   }
 }
 
+TEST_P(GPIO_OutputTest, GPIO_OutputWriteAtomicTest) {
+  _GPIO_Port port{};
+  const auto param = GetParam();
+
+  const uint32_t values[] = {0, 1};
+
+  for (auto value : values) {
+    port.BSRR = 0;
+    RegisterBitset bsrr_before = port.BSRR;
+    // Check value written
+    GPIO_Driver_OutputWriteAtomic(&port, param.pos, value);
+    RegisterBitset bsrr_after = port.BSRR;
+    EXPECT_EQ(bsrr_after[uint32_t(param.pos)], value);
+
+    // Idempotency
+    GPIO_Driver_OutputWriteAtomic(&port, param.pos, value);
+    EXPECT_EQ(bsrr_after[uint32_t(param.pos)], value);
+
+    // Isolation
+    auto range = GetPinsExcluding(param.pos);
+    for (auto pin : range) {
+      const auto pos = uint32_t(pin);
+      EXPECT_EQ(bsrr_before[pos], bsrr_after[pos]);
+    }
+  }
+}
 INSTANTIATE_TEST_SUITE_P(
     GPIO_ConfigureOutputTests, GPIO_OutputTest, ::testing::ValuesIn(kTestData));
